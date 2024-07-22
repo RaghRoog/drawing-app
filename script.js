@@ -1,3 +1,14 @@
+//setting canvas size
+document.addEventListener('DOMContentLoaded', () => {
+    let canvas = document.getElementById('drawingArea')
+    resizeCanvas(canvas)
+})
+function resizeCanvas(canvas){
+    let rect = canvas.getBoundingClientRect()
+    canvas.width = rect.width
+    canvas.height = rect.height
+}
+
 
 //getting cords
 function getCords(event){
