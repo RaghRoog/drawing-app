@@ -10,16 +10,40 @@ function getCords(event){
 let startingPoint = {}
 let endingPoint = {}
 
+let lines = []
+let pencilLines = []
+
+//redrawing canvas
+function redrawCanvas(ctx){
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    lines.forEach(line => {
+        ctx.beginPath()
+        ctx.moveTo(line.start.x, line.start.y)
+        ctx.lineTo(line.end.x, line.end.y)
+        ctx.stroke() 
+    })
+    pencilLines.forEach(line => {
+        ctx.beginPath()
+        ctx.moveTo(line[0].x, line[0].y)
+        for(let i = 0; i < line.length; i++){
+            ctx.lineTo(line[i].x, line[i].y)
+        }
+        ctx.stroke()
+    })
+}
 //drawing a line
-function drawingLine(ctx){
+function lineDraw(event, ctx){
+    endingPoint = getCords(event)
+    redrawCanvas(ctx)
     ctx.beginPath()
     ctx.moveTo(startingPoint.x, startingPoint.y)
     ctx.lineTo(endingPoint.x, endingPoint.y)
-    ctx.stroke()    
+    ctx.stroke()
 }
 //drawing with pencil
-function pencilDraw(event, ctx){
+function pencilDraw(event, ctx, currentLine){
     endingPoint = getCords(event)
+    currentLine.push({x: endingPoint.x, y: endingPoint.y})
     ctx.beginPath()
     ctx.moveTo(startingPoint.x, startingPoint.y)
     ctx.lineTo(endingPoint.x, endingPoint.y)
@@ -27,8 +51,8 @@ function pencilDraw(event, ctx){
     startingPoint = endingPoint
 }
 
-//removing event listeners from canvas
-function removeEventListenersFromCanvas(){
+//clone canvas without eventListeners
+function cloneCanvas(){
     let drawingArea = document.getElementById('drawingArea')
     let newDrawingArea = drawingArea.cloneNode(true)
     newDrawingArea.getContext('2d').drawImage(drawingArea, 0, 0)
@@ -36,37 +60,46 @@ function removeEventListenersFromCanvas(){
     return newDrawingArea
 }
 
-//selecting drawing tool
+//drawing tools
 //line tool
-function selectLineTool(){
-    let drawingArea = removeEventListenersFromCanvas()
+function lineTool(){
+    let drawingArea = cloneCanvas()
     let ctx = drawingArea.getContext('2d')
-    drawingArea.addEventListener('mousedown', (event) => {
+    let lineDrawHandler
+    drawingArea.addEventListener('mousedown', event => {
         startingPoint = getCords(event)
+        lineDrawHandler = event => lineDraw(event, ctx)
+        drawingArea.addEventListener('mousemove', lineDrawHandler)
+    })    
+    drawingArea.addEventListener('mouseup', event => {
+        endingPoint = getCords(event);
+        lines.push({ start: startingPoint, end: endingPoint })
+        drawingArea.removeEventListener('mousemove', lineDrawHandler)
+        redrawCanvas(ctx)
     })
-    drawingArea.addEventListener('mouseup', (event) => {
-        endingPoint = getCords(event)
-        drawingLine(ctx)
-   })
 }
 let selectLineBtn = document.getElementById('selectLineBtn')
-selectLineBtn.addEventListener('click', selectLineTool)
+selectLineBtn.addEventListener('click', lineTool)
 //pencil tool
-function selectPencilTool(){
-    let drawingArea = removeEventListenersFromCanvas()
+function pencilTool(){
+    let drawingArea = cloneCanvas()
     let ctx = drawingArea.getContext('2d')
+    let currentLine = []
     let pencilDrawHandler
     drawingArea.addEventListener('mousedown', event => {
         startingPoint = getCords(event)
-        pencilDrawHandler = event => pencilDraw(event, ctx)
+        currentLine = [{x: startingPoint.x, y: startingPoint.y}]
+        pencilDrawHandler = event => pencilDraw(event, ctx, currentLine)
         drawingArea.addEventListener('mousemove', pencilDrawHandler)
     })
     drawingArea.addEventListener('mouseup', () => {
         drawingArea.removeEventListener('mousemove', pencilDrawHandler)
+        pencilLines.push(currentLine)
     })
     drawingArea.addEventListener('mouseleave', () => {
         drawingArea.removeEventListener('mousemove', pencilDrawHandler)
+        pencilLines.push(currentLine)
     })
 }
 let selectPencilBtn = document.getElementById('selectPencilBtn')
-selectPencilBtn.addEventListener('click', selectPencilTool)
+selectPencilBtn.addEventListener('click', pencilTool)
