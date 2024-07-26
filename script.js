@@ -24,6 +24,7 @@ let lines = []
 let pencilLines = []
 
 let currentColor
+let isEraser
 
 //redrawing canvas
 function redrawCanvas(ctx){
@@ -56,13 +57,13 @@ function lineDraw(event, ctx){
     ctx.stroke()
 }
 //drawing with pencil
-function pencilDraw(event, ctx, currentLine){
+function pencilDraw(event, ctx, currentLine, color){
     endingPoint = getCords(event)
     currentLine.push({x: endingPoint.x, y: endingPoint.y, color: currentColor})
     ctx.beginPath()
     ctx.moveTo(startingPoint.x, startingPoint.y)
     ctx.lineTo(endingPoint.x, endingPoint.y)
-    ctx.strokeStyle = `${currentColor}`
+    ctx.strokeStyle = `${color}`
     ctx.stroke()    
     startingPoint = endingPoint
 }
@@ -97,16 +98,17 @@ function lineTool(){
 let selectLineBtn = document.getElementById('selectLineBtn')
 selectLineBtn.addEventListener('click', lineTool)
 //pencil tool
-function pencilTool(isEraser){
+function pencilTool(){
     let drawingArea = cloneCanvas()
     let ctx = drawingArea.getContext('2d')
     let currentLine = []
     let pencilDrawHandler
+    let lineColor
     drawingArea.addEventListener('mousedown', event => {
         startingPoint = getCords(event)
-        currentColor = isEraser ? "#FFFFFF" : currentColor
-        currentLine = [{x: startingPoint.x, y: startingPoint.y, color: currentColor}]
-        pencilDrawHandler = event => pencilDraw(event, ctx, currentLine)
+        lineColor = isEraser ? "#FFFFFF" : currentColor
+        currentLine = [{x: startingPoint.x, y: startingPoint.y, color: lineColor}]
+        pencilDrawHandler = event => pencilDraw(event, ctx, currentLine, lineColor)
         drawingArea.addEventListener('mousemove', pencilDrawHandler)
     })
     drawingArea.addEventListener('mouseup', () => {
@@ -119,10 +121,16 @@ function pencilTool(isEraser){
     })
 }
 let selectPencilBtn = document.getElementById('selectPencilBtn')
-selectPencilBtn.addEventListener('click', () => pencilTool(false))
+selectPencilBtn.addEventListener('click', () => {
+    isEraser = false
+    pencilTool()
+})
 //eraser (eraser is working like pencil but always draw with white color)
 let selectEraserBtn = document.getElementById('selectEraserBtn')
-selectEraserBtn.addEventListener('click', () => pencilTool(true))
+selectEraserBtn.addEventListener('click', () => {
+    isEraser = true
+    pencilTool()
+})
 //changing color
 let colorPicker = document.getElementById('colorPicker')
 currentColor = colorPicker.value
