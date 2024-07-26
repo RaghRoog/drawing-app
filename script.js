@@ -9,7 +9,6 @@ function resizeCanvas(canvas){
     canvas.height = rect.height
 }
 
-
 //getting cords
 function getCords(event){
     return {
@@ -24,6 +23,8 @@ let endingPoint = {}
 let lines = []
 let pencilLines = []
 
+let currentColor
+
 //redrawing canvas
 function redrawCanvas(ctx){
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
@@ -31,6 +32,7 @@ function redrawCanvas(ctx){
         ctx.beginPath()
         ctx.moveTo(line.start.x, line.start.y)
         ctx.lineTo(line.end.x, line.end.y)
+        ctx.strokeStyle = `${line.color}`
         ctx.stroke() 
     })
     pencilLines.forEach(line => {
@@ -39,6 +41,7 @@ function redrawCanvas(ctx){
         for(let i = 0; i < line.length; i++){
             ctx.lineTo(line[i].x, line[i].y)
         }
+        ctx.strokeStyle = `${line[0].color}`
         ctx.stroke()
     })
 }
@@ -49,15 +52,17 @@ function lineDraw(event, ctx){
     ctx.beginPath()
     ctx.moveTo(startingPoint.x, startingPoint.y)
     ctx.lineTo(endingPoint.x, endingPoint.y)
+    ctx.strokeStyle = `${currentColor}`
     ctx.stroke()
 }
 //drawing with pencil
 function pencilDraw(event, ctx, currentLine){
     endingPoint = getCords(event)
-    currentLine.push({x: endingPoint.x, y: endingPoint.y})
+    currentLine.push({x: endingPoint.x, y: endingPoint.y, color: currentColor})
     ctx.beginPath()
     ctx.moveTo(startingPoint.x, startingPoint.y)
     ctx.lineTo(endingPoint.x, endingPoint.y)
+    ctx.strokeStyle = `${currentColor}`
     ctx.stroke()    
     startingPoint = endingPoint
 }
@@ -84,7 +89,7 @@ function lineTool(){
     })    
     drawingArea.addEventListener('mouseup', event => {
         endingPoint = getCords(event);
-        lines.push({ start: startingPoint, end: endingPoint })
+        lines.push({ start: startingPoint, end: endingPoint, color: currentColor })
         drawingArea.removeEventListener('mousemove', lineDrawHandler)
         redrawCanvas(ctx)
     })
@@ -99,7 +104,7 @@ function pencilTool(){
     let pencilDrawHandler
     drawingArea.addEventListener('mousedown', event => {
         startingPoint = getCords(event)
-        currentLine = [{x: startingPoint.x, y: startingPoint.y}]
+        currentLine = [{x: startingPoint.x, y: startingPoint.y, color: currentColor}]
         pencilDrawHandler = event => pencilDraw(event, ctx, currentLine)
         drawingArea.addEventListener('mousemove', pencilDrawHandler)
     })
@@ -114,3 +119,9 @@ function pencilTool(){
 }
 let selectPencilBtn = document.getElementById('selectPencilBtn')
 selectPencilBtn.addEventListener('click', pencilTool)
+//changing color
+let colorPicker = document.getElementById('colorPicker')
+currentColor = colorPicker.value
+colorPicker.addEventListener('change', () => {
+    currentColor = colorPicker.value
+})
